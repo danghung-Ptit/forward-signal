@@ -79,7 +79,7 @@ def createCr4Signal(signal):
 	response = requests.post(BaseURL + '/api/v1/admin/signals', json=json_data, headers=headers).json()
 	print(response)
 	
-	
+message_klondike = ''
 client = TelegramClient('0xLouis', api_id, api_hash)
 @client.on(events.NewMessage)
 async def handler(event):
@@ -87,21 +87,22 @@ async def handler(event):
 	chat_id = event.chat_id
 	if chat_id == TELEGRAM_CHAT_ID_klondike:
 		message = event.message
-		await message.forward_to(TELEGRAM_CHAT_ID_CryptoHawk_Bot_Forward_Signal)
-		if "STOP LOSS".lower() in event.text.lower():
+		#await message.forward_to(TELEGRAM_CHAT_ID_CryptoHawk_Bot_Forward_Signal)
+		if "STOP LOSS".lower() in event.text.lower() and message != message_klondike:
 			signal_klondike = Signal(event.text)
 			signal_klondike.klondike_signal()
 			createCr4Signal(signal_klondike)
+			message_klondike = message
 	elif chat_id == TELEGRAM_CHAT_ID_coach:
 		message = event.message
-		await message.forward_to(TELEGRAM_CHAT_ID_CryptoHawk_Bot_Forward_Signal)
+		#await message.forward_to(TELEGRAM_CHAT_ID_CryptoHawk_Bot_Forward_Signal)
 		if "STOP LOSS".lower() in event.text.lower():
 			signal_coach = Signal(event.text)
 			signal_coach.coach_signal()
 			createCr4Signal(signal_coach)
 	elif chat_id == TELEGRAM_CHAT_ID_The_Bull:
 		message = event.message
-		await message.forward_to(TELEGRAM_CHAT_ID_CryptoHawk_Bot_Forward_Signal)
+		#await message.forward_to(TELEGRAM_CHAT_ID_CryptoHawk_Bot_Forward_Signal)
 		if "STOP LOSS".lower() in event.text.lower():
 			signal_theBull = Signal(event.text)
 			signal_theBull.theBull_signal()
