@@ -1,13 +1,7 @@
 from FormatSignal import Signal
 from get_token import getToken, BaseURL
 from telethon import TelegramClient, events
-from datetime import datetime
 import yaml
-import sys
-import asyncio
-import json
-import telegram
-import json
 import requests
 import time
 import os
@@ -19,11 +13,18 @@ api_id = cfg['telethon']['api_id']
 api_hash = cfg['telethon']['api_hash']
 TELEGRAM_CHAT_ID_Test_bot = cfg['telethon']['TELEGRAM_CHAT_ID_Test_bot']
 TELEGRAM_CHAT_ID_CryptoHawk_Bot_Forward_Signal = cfg['telethon']['TELEGRAM_CHAT_ID_CryptoHawk-Bot-Forward_Signal']
-TELEGRAM_CHAT_ID_The_Bull = cfg['telethon']['TELEGRAM_CHAT_ID_The_Bull']
-TELEGRAM_CHAT_ID_Rose = cfg['telethon']['TELEGRAM_CHAT_ID_Rose']
-TELEGRAM_CHAT_ID_coach = cfg['telethon']['TELEGRAM_CHAT_ID_coach']
+# TELEGRAM_CHAT_ID_The_Bull = cfg['telethon']['TELEGRAM_CHAT_ID_The_Bull']
+# TELEGRAM_CHAT_ID_Rose = cfg['telethon']['TELEGRAM_CHAT_ID_Rose']
+# TELEGRAM_CHAT_ID_coach = cfg['telethon']['TELEGRAM_CHAT_ID_coach']
 TELEGRAM_CHAT_ID_klondike = cfg['telethon']['TELEGRAM_CHAT_ID_klondike']
-#client = TelegramClient('hungdv', api_id, api_hash)
+TELEGRAM_CHAT_ID_Predictum = cfg['telethon']['TELEGRAM_CHAT_ID_Predictum']
+TELEGRAM_CHAT_ID_killers = cfg['telethon']['TELEGRAM_CHAT_ID_killers']
+TELEGRAM_CHAT_ID_Bullet = cfg['telethon']['TELEGRAM_CHAT_ID_Bullet']
+TELEGRAM_CHAT_ID_Mega = cfg['telethon']['TELEGRAM_CHAT_ID_Mega']
+TELEGRAM_CHAT_ID_Yocrypto = cfg['telethon']['TELEGRAM_CHAT_ID_Yocrypto']
+TELEGRAM_CHAT_ID_Alts = cfg['telethon']['TELEGRAM_CHAT_ID_Alts']
+
+
 
 def getChartURL(syombol):
 	return ""
@@ -80,57 +81,98 @@ def createCr4Signal(signal):
 	print(response)
 	
 message_klondike = ''
+message_Predictum = ''
+message_killers = ''
+message_Bullet = ''
+message_Mega = ''
+message_Yocrypto = ''
+message_Alts = ''
 client = TelegramClient('0xLouis', api_id, api_hash)
+#client = TelegramClient('hungdv', api_id, api_hash)
 @client.on(events.NewMessage)
 async def handler(event):
-	chat = await event.get_chat()
+	global message_klondike, message_Predictum, message_killers, message_Bullet, message_Mega, message_Yocrypto, message_Alts
 	chat_id = event.chat_id
+	# if chat_id == TELEGRAM_CHAT_ID_Test_bot:
+	# 	message = event.message
+	# 	if "TARGET".lower() in message.text.lower():
+	# 		print(message.text)
+
 	if chat_id == TELEGRAM_CHAT_ID_klondike:
 		message = event.message
 		#await message.forward_to(TELEGRAM_CHAT_ID_CryptoHawk_Bot_Forward_Signal)
-		if "STOP LOSS".lower() in event.text.lower() and message != message_klondike:
+		if "TARGET".lower() in message.text.lower() and message != message_klondike:
 			signal_klondike = Signal(event.text)
 			signal_klondike.klondike_signal()
-			createCr4Signal(signal_klondike)
-			message_klondike = message
-	elif chat_id == TELEGRAM_CHAT_ID_coach:
+			if signal_klondike.check:
+				createCr4Signal(signal_klondike)
+				message_klondike = message
+
+	elif chat_id == TELEGRAM_CHAT_ID_Predictum:
 		message = event.message
 		#await message.forward_to(TELEGRAM_CHAT_ID_CryptoHawk_Bot_Forward_Signal)
-		if "STOP LOSS".lower() in event.text.lower():
-			signal_coach = Signal(event.text)
-			signal_coach.coach_signal()
-			createCr4Signal(signal_coach)
-	elif chat_id == TELEGRAM_CHAT_ID_The_Bull:
+		if "TARGET".lower() in message.text.lower() and message != message_Predictum:
+			signal_Predictum = Signal(event.text)
+			signal_Predictum.predictum_signal()
+			if signal_Predictum.check:
+				createCr4Signal(signal_Predictum)
+				message_Predictum = message
+
+	elif chat_id == TELEGRAM_CHAT_ID_killers:
 		message = event.message
 		#await message.forward_to(TELEGRAM_CHAT_ID_CryptoHawk_Bot_Forward_Signal)
-		if "STOP LOSS".lower() in event.text.lower():
-			signal_theBull = Signal(event.text)
-			signal_theBull.theBull_signal()
-			createCr4Signal(signal_theBull)
+		if "TARGET".lower() in message.text.lower() and message != message_killers:
+			signal_killers = Signal(event.text)
+			signal_killers.killers_signal()
+			if signal_killers.check:
+				createCr4Signal(signal_killers)
+				message_killers = message
+
+
+	elif chat_id == TELEGRAM_CHAT_ID_Bullet:
+		message = event.message
+		#await message.forward_to(TELEGRAM_CHAT_ID_CryptoHawk_Bot_Forward_Signal)
+		if "TARGET".lower() in message.text.lower() and message != message_Bullet:
+			signal_Bullet = Signal(event.text)
+			signal_Bullet.bullet_signal()
+			if signal_Bullet.check:
+				createCr4Signal(signal_Bullet)
+				message_Bullet = message
+
+
+	elif chat_id == TELEGRAM_CHAT_ID_Mega:
+		message = event.message
+		#await message.forward_to(TELEGRAM_CHAT_ID_CryptoHawk_Bot_Forward_Signal)
+		if "TARGET".lower() in message.text.lower() and message != message_Mega:
+			signal_Mega = Signal(event.text)
+			signal_Mega.mega_signal()
+			if signal_Mega.check:
+				createCr4Signal(signal_Mega)
+				message_Mega = message
+
+	elif chat_id == TELEGRAM_CHAT_ID_Yocrypto:
+		message = event.message
+		#await message.forward_to(TELEGRAM_CHAT_ID_CryptoHawk_Bot_Forward_Signal)
+		if "TARGET".lower() in message.text.lower() and message != message_Yocrypto:
+			signal_Yocrypto = Signal(event.text)
+			signal_Yocrypto.yocrypto_signal()
+			if signal_Yocrypto.check:
+				createCr4Signal(signal_Yocrypto)
+				message_Yocrypto = message
+
+	elif chat_id == TELEGRAM_CHAT_ID_Alts:
+		message = event.message
+		#await message.forward_to(TELEGRAM_CHAT_ID_CryptoHawk_Bot_Forward_Signal)
+		if "TARGET".lower() in message.text.lower() and message != message_Alts:
+			signal_Alts = Signal(event.text)
+			signal_Alts.alts_signal()
+			if signal_Alts.check:
+				createCr4Signal(signal_Alts)
+				message_Alts = message
 			
 client.start()
 client.run_until_disconnected()
 
-'''
-@client.on(events.NewMessage(chats=TELEGRAM_CHAT_ID_Test_bot))
-async def handler(event):
-	if "🥎 Open".lower() in event.text.lower() or "🔑 Enter".lower() in event.text.lower():
-		signal_klondike = Signal(event.text)
-		signal_klondike.klondike_signal()
-		createCr4Signal(signal_klondike)
-		
-	elif "Exchange :".lower() in event.text.lower():
-		signal_coach = Signal(event.text)
-		signal_coach.coach_signal()
-		createCr4Signal(signal_coach)
-	elif "BELOW".lower() in event.text.lower():
-		signal_theBull = Signal(event.text)
-		signal_theBull.theBull_signal()
-		createCr4Signal(signal_theBull)
-		
-# Bắt đầu lắng nghe sự kiện
-client.start()
-client.run_until_disconnected()
-'''
+
 
 

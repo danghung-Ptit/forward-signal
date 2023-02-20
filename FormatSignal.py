@@ -22,6 +22,7 @@ class Signal:
         self.status = 3 #1 open, 2 close 3 setup
         self.signalId = ""
         self.signalMode = "SCALP"
+        self.check = False
     def get_symbol(self):
         return self.symbol
 
@@ -50,46 +51,18 @@ class Signal:
 
 
 
-    def woles_signal(self):
-        filtered_signal = self.signal
-        sefl.source = 9
-        otherExchanges = ["ftx", "coinbase", "kucoin", "kraken", "bitfinex", "huobi", "bybit"]
 
-        if "binance" not in filtered_signal.lower():
-            for exchange in otherExchanges:
-                if exchange in filtered_signal:
-                    self.isBinance = False
-
-        self.targets = re.findall(r"TARGET \d+ : (\d+)", filtered_signal)
-        self.stopLoss = re.findall(r"STOP LOSS : (\d+)", filtered_signal)[0].strip()
-        self.leverage = re.findall(r"LEVERAGE:\s+(\d+)", filtered_signal)[0].strip()
-        self.symbol, self.currency = re.findall(r"#(\w+)/(\w+)", filtered_signal)[0]
-        self.futureType = re.findall(r"#(\w+)", filtered_signal)[1].upper()
-
-        buy_price_range = re.findall(r"BUY :([\d\$\-]+)\$", filtered_signal)[0].strip()
-        buy_prices = [int(price.strip().split("$")[0]) for price in buy_price_range.split("-")]
-        self.entries = sum(buy_prices) / len(buy_prices)
-        
-        
     def klondike_signal(sefl):
         text = sefl.signal
         sefl.source = 12
-        otherExchanges = ["ftx", "coinbase", "kucoin", "kraken", "bitfinex", "huobi", "bybit"]
-        
-        if "binance" not in text.lower():
-            for exchange in otherExchanges:
-                if exchange in text:
-                    self.isBinance = False
-                    
-            
-        
+
         # Get the name of the coin
         coin_info = re.findall(r"\((.*)\)", text)
         if coin_info:
             coin = coin_info[0].split("/")[0].strip().upper()
         else:
             coin = None
-            
+
         # Get the currency
         currency_info = re.findall(r"\((.*)\)", text)
         if currency_info:
@@ -100,24 +73,24 @@ class Signal:
                 currency = "BUSD"
         else:
             currency = None
-            
+
         # Get the targets
         targets_info = re.findall("the price \$([\d\.]+)", text)
         if targets_info:
             targets = [float(target) for target in targets_info]
         else:
             targets = []
-            
+
         # Get the stop loss
         stop_loss_info = re.search("STOP LOSS: \$([\d\.]+)", text)
         if stop_loss_info is not None:
             stop_loss = float(stop_loss_info.group(1))
         else:
             stop_loss = None
-            
+
         # Get the average buy price
-        
-            
+
+
         # Get the average buy price
         buy_price_range = re.findall(r"price between \$([\d]+)\- \$([\d.]+)", text)
         if buy_price_range:
@@ -135,9 +108,9 @@ class Signal:
         print("Targets:", targets)
         print("Stop Loss:", stop_loss)
         print("Average Buy Price:", average_buy_price)
-        
+
         #Get the futureType
-    
+
         if average_buy_price > stop_loss:
             sefl.futureType = "LONG"
         elif average_buy_price < stop_loss:
@@ -147,251 +120,591 @@ class Signal:
         sefl.targets = targets
         sefl.stopLoss = stop_loss
         sefl.entries = average_buy_price
-        
-        
-        
-    def coach_signal(sefl):
-        text = sefl.signal
-        sefl.source = 13
-        
-        otherExchanges = ["ftx", "coinbase", "kucoin", "kraken", "bitfinex", "huobi", "bybit"]
-        
-        if "binance" not in text.lower():
-            for exchange in otherExchanges:
-                if exchange in text:
-                    self.isBinance = False
-                    
-        #Get the name of the coin
-        
-        coin_info = re.findall(r"#(\w+)", text)
+
+
+
+    def predictum_signal(self):
+        self.source = 9
+        text = self.signal
+        if 'spot' in text.lower():
+            self.form = "SPOT"
+
+         #Get the name of the coin
+
+        coin_info = re.findall(r"\#(.*)/", text)
         if coin_info:
             coin = coin_info[0].strip().upper()
         else:
             coin = None
-            
-        #Get the buy price
-            
-        buy_price_info = re.findall(r"Buy : (\d+.\d+)", text)
-        if buy_price_info:
-            buy_price = float(buy_price_info[0])
-        else:
-            buy_price_info = re.findall(r"Entry : (\d+.\d+)", text)
-            if buy_price_info:
-                buy_price = float(buy_price_info[0])
-            else:
-                buy_price = None
-            
-        #Get the targets
-            
-        targets_info = re.findall(r"Targets : (\d+.\d+)", text)
-        if targets_info:
-            targets = [float(price) for price in targets_info]
-        else:
-            targets = []
-            
-        #Get the stop loss
-            
-        stop_loss_info = re.findall(r"Stop Loss : (\d+.\d+)", text)
-        if stop_loss_info:
-            stop_loss = float(stop_loss_info[0])
-        else:
-            stop_loss = None
-            
-        #Get the exchange
-            
-        exchange_info = re.findall(r"Exchange : #(\w+)", text)
-        if exchange_info:
-            exchange = exchange_info[0].strip().lower()
-        else:
-            exchange = None
-            
-        #Get the futureType
-            
-        if buy_price > stop_loss:
-            sefl.futureType = "LONG"
-            sefl.form = "SPOT"
-        elif buy_price < stop_loss:
-            sefl.futureType = "SHORT"
-            sefl.form = "FUTURE"
-        
-        print("Coin:", coin)
-        print("Buy price:", buy_price)
-        print("Targets:", targets)
-        print("Stop loss:", stop_loss)
-        print("Exchange:", exchange)
-        
-        #Get the futureType
-        
-        if buy_price > stop_loss:
-            sefl.futureType = "LONG"
-        elif buy_price < stop_loss:
-            sefl.futureType = "SHORT"
-        sefl.symbol = coin
-        sefl.currency = "USDT"
-        sefl.targets = targets
-        sefl.stopLoss = stop_loss
-        sefl.entries = buy_price
-        
-        
-    def theBull_signal(sefl):
-        text = sefl.signal
-        sefl.source = 11
-        otherExchanges = ["ftx", "coinbase", "kucoin", "kraken", "bitfinex", "huobi", "bybit"]
-        
-        if "binance" not in text.lower():
-            for exchange in otherExchanges:
-                if exchange in text:
-                    self.isBinance = False
-                    
-                    
-        #Get the name of the coin
-                    
-        coin_info = re.findall(r"([A-Z]+)/", text)
-        if coin_info:
-            coin = coin_info[0].strip().upper()
-        else:
-            coin = None
-            
-        #Get the currency
-            
-        currency_info = re.findall(r"/([A-Z]+)\s", text)
+        # Get the currency
+        currency_info = re.findall(r"\#.*\/(.*)", text)
         if currency_info:
             currency = currency_info[0].strip().upper()
         else:
             currency = None
-            
-        #Get the targets
-            
-        targets_info = re.findall(r"\s(\d+.\d+)", text)
+
+        # Get the average buy price
+        buy_price_info = re.search(r"Entry Point - (\d+.\d+)", text)
+        if buy_price_info:
+            average_buy_price = float(buy_price_info.group(1))
+        else:
+            average_buy_price = None
+
+        # Get the targets
+        targets_info = re.findall(r"Targets: ([\d+.\s-]+)", text)
         if targets_info:
-            targets = [float(price) for price in targets_info]
+            targets = [float(target) for target in targets_info[0].split("-")]
         else:
             targets = []
-            
-        #Get the stop loss
-            
-        stop_loss_info = re.findall(r"BELOW (\d+.\d+)", text)
+
+        # Get the stop loss
+        stop_loss_info = re.findall(r"Stop Loss - (\d+.\d+)", text)
         if stop_loss_info:
             stop_loss = float(stop_loss_info[0])
         else:
             stop_loss = None
-            
-        #Get the average buy price
-        entry = re.search("ENTRY\s+([\d\.]+)\s+-\s+([\d\.]+)", text)
-        if entry:
-            average_buy_price = (float(entry.group(1)) + float(entry.group(2))) / 2
-        else:
-            average_buy_price = None
-            
-        #Get the futureType
-        if average_buy_price:
+
+        # Get the future type
+        if average_buy_price is not None and stop_loss is not None:
             if average_buy_price > stop_loss:
-                sefl.futureType = "LONG"
+                futureType = "LONG"
             elif average_buy_price < stop_loss:
-                sefl.futureType = "SHORT"
-            
+                futureType = "SHORT"
+        else:
+            futureType = None
+
+
+        self.futureType = futureType
+        self.symbol = coin
+        self.currency = currency
+        self.targets = targets
+        self.stopLoss = stop_loss
+        self.entries = average_buy_price
+
+        if coin is not None and futureType is not None and targets is not None and stop_loss is not None and average_buy_price is not None:
+            self.check = True
+            print("True")
+
+        print("predictum_signal")
         print("Coin:", coin)
         print("Currency:", currency)
         print("Targets:", targets)
         print("Stop Loss:", stop_loss)
         print("Average Buy Price:", average_buy_price)
-        
-        
-        #Get the futureType
-        
-        if average_buy_price > stop_loss:
-            sefl.futureType = "LONG"
-        elif average_buy_price < stop_loss:
-            sefl.futureType = "SHORT"
-        sefl.symbol = coin
-        sefl.currency = currency
-        sefl.targets = targets
-        sefl.stopLoss = stop_loss
-        sefl.entries = average_buy_price
+        print(futureType)
+
+
+    def yocrypto_signal(self):
+        self.source = 10
+        text = self.signal
+        if 'spot' in text.lower():
+            self.form = "SPOT"
+
+
+        # Get the name of the coin
+        coin_info = re.findall(r"\#(.*)\s", text)
+        if coin_info:
+            coin = coin_info[0].strip().upper()
+            if coin.endswith("USDT") or coin.endswith("BUSD"):
+                coin = coin[:-4]
+        else:
+            coin = None
+
+         # Get the currency
+        currency_info = re.findall(r"\#(.*)\s", text)
+        if currency_info:
+            currency = currency_info[0].strip().upper()[-4:]
+        else:
+            currency = None
+
+        # Get the average buy price
+        buy_price_info = re.findall(r"Entry: ([\d+.\-]+)", text)
+        if buy_price_info:
+            buy_prices = [float(price) for price in buy_price_info[0].split("-")]
+            average_buy_price = sum(buy_prices) / len(buy_prices)
+        else:
+            average_buy_price = None
+
+        # Get the targets
+        targets_info = re.findall(r"Targets: ([\d+.\s-]+)", text)
+        if targets_info:
+            targets = [float(target) for target in targets_info[0].split("-")]
+        else:
+            targets = []
+
+        # Get the stop loss
+        stop_loss_info = re.findall(r"Stop-loss\s*-\s*([\d+.\-]+)", text)
+        if stop_loss_info:
+            stop_loss = float(stop_loss_info[0])
+        else:
+            stop_loss = None
+
+
+        # Get the future type
+        if average_buy_price is not None and stop_loss is not None:
+            if average_buy_price > stop_loss:
+                futureType = "LONG"
+            elif average_buy_price < stop_loss:
+                futureType = "SHORT"
+        else:
+            futureType = None
+
+
+        self.futureType = futureType
+        self.symbol = coin
+        self.currency = currency
+        self.targets = targets
+        self.stopLoss = stop_loss
+        self.entries = average_buy_price
+
+        if coin is not None and futureType is not None and targets is not None and stop_loss is not None and average_buy_price is not None:
+            self.check = True
+            print("True")
+
+        print("yocrypto_signal")
+        print("Coin:", coin)
+        print("Currency:", currency)
+        print("Targets:", targets)
+        print("Stop Loss:", stop_loss)
+        print("Average Buy Price:", average_buy_price)
+        print(futureType)
+
+
+    def bullet_signal(self):
+        self.source = 14
+        text = self.signal
+        if 'spot' in text.lower():
+            self.form = "SPOT"
+
+        # Get the coin name and direction
+        coin_info = re.findall(r"COIN: \$?(.*)\/.*\nDirection:\s*(\w+)", text)
+        if coin_info:
+            coin, direction = coin_info[0]
+            coin = coin.strip().upper()
+        else:
+            coin, direction = None, None
+
+        currency_info = re.findall(r"\/([A-Za-z]+)", text)
+        if currency_info:
+            currency = currency_info[0].strip().upper()
+        else:
+            currency = None
+
+
+        # Get the exchange
+        exchange_info = re.findall(r"Exchange:\s*(.*)", text)
+        if exchange_info:
+            exchange = exchange_info[0].strip()
+        else:
+            exchange = None
+
+        # Get the leverage
+        leverage_info = re.findall(r"Leverage:\s*(.*)", text)
+        if leverage_info:
+            leverage = leverage_info[0].strip()
+        else:
+            leverage = None
+
+        # Get the entry prices
+        buy_price_info = re.findall(r"ENTRY:\s*([\d+.\s-]+)", text)
+        if buy_price_info:
+            buy_prices = [float(price) for price in buy_price_info[0].split("-")]
+            average_buy_price = round(sum(buy_prices) / len(buy_prices), 5)
+        else:
+            average_buy_price = None
+
+        # Get the targets
+        targets_info = re.findall(r"TARGETS:\s*([\d+.\s-]+)", text)
+        if targets_info:
+            targets = [float(target) for target in targets_info[0].split("-")]
+        else:
+            targets = []
+
+        # Get the stop loss
+        stop_loss_info = re.findall(r"SL:\s*([\d+.]+)", text)
+        if stop_loss_info:
+            stop_loss = float(stop_loss_info[0])
+        else:
+            stop_loss = None
+
+        # Get the future type
+        if average_buy_price is not None and stop_loss is not None:
+            if average_buy_price > stop_loss:
+                futureType = "LONG"
+            elif average_buy_price < stop_loss:
+                futureType = "SHORT"
+        else:
+            futureType = None
+
+
+        self.futureType = futureType
+        self.symbol = coin
+        self.currency = currency
+        self.targets = targets
+        self.stopLoss = stop_loss
+        self.entries = average_buy_price
+
+        if coin is not None and futureType is not None and targets is not None and stop_loss is not None and average_buy_price is not None:
+            self.check = True
+            print("True")
+
+        print("bullet_signal")
+        print("Coin:", coin)
+        print("Currency:", currency)
+        print("Targets:", targets)
+        print("Stop Loss:", stop_loss)
+        print("Average Buy Price:", average_buy_price)
+        print(futureType)
+
+
+    def mega_signal(self):
+        text = self.signal
+
+        self.source = 11
+        text = self.signal
+        if 'spot' in text.lower():
+            self.form = "SPOT"
+
+       # Tìm kiếm tên của đồng tiền
+        coin_info = re.findall(r"\#?([\w\d]+)[/\s]+[\w\d]+\s", text)
+        if coin_info:
+            coin = coin_info[0].strip().upper()
+        else:
+            coin = None
+
+        currency = re.search(r"/(\w+)\s", text).group(1)
+
+
+       # Lấy danh sách các giá trị mục tiêu trong phần Entry Targets
+        entry_targets = re.findall(r"Entry Targets:\n(?:\d+\)\s)?([\d\.]+)\n(?:\d+\)\s)?([\d\.]+)", text)
+        entry_targets = [float(x) for x in entry_targets[0]]
+        if entry_targets:
+            average_buy_price = round(sum(entry_targets) / len(entry_targets), 5)
+        else:
+            average_buy_price = None
+
+        # Lấy các giá trị trong phần Take-Profit Targets
+        take_profit_targets = re.findall(r"Take-Profit Targets:\n([\d\.\)\s%-]+)", text)
+        take_profit_targets = re.findall(r"([\d\.]+)\s*-", take_profit_targets[0])
+        targets = [float(x) for x in take_profit_targets]
+
+        # Lấy các giá trị trong phần Stop Targets
+        stop_targets = re.findall(r"Stop Targets:\n\d\)\s*([\d\.]+)", text)
+        stop_loss = [float(x) for x in stop_targets][0]
+
+         # Get the future type
+        if average_buy_price is not None and stop_loss is not None:
+            if average_buy_price > stop_loss:
+                futureType = "LONG"
+            elif average_buy_price < stop_loss:
+                futureType = "SHORT"
+        else:
+            futureType = None
+
+
+        self.futureType = futureType
+        self.symbol = coin
+        self.currency = currency
+        self.targets = targets
+        self.stopLoss = stop_loss
+        self.entries = average_buy_price
+
+        if coin is not None and futureType is not None and targets is not None and stop_loss is not None and average_buy_price is not None:
+            self.check = True
+            print("True")
+        print("mega_signal")
+        print("Coin:", coin)
+        print("Currency:", currency)
+        print("Targets:", targets)
+        print("Stop Loss:", stop_loss)
+        print("Average Buy Price:", average_buy_price)
+        print(futureType)
+
+
+    def killers_signal(self):
+        self.source = 13
+        text = self.signal
+        if 'spot' in text.lower():
+            self.form = "SPOT"
+
+
+        # Get the name of the coin
+        coin_info = re.findall(r"\$([a-zA-Z]+)/[a-zA-Z]+", text)
+        if coin_info:
+            coin = coin_info[0].strip().upper()
+        else:
+            coin = None
+
+        # Get the currency
+        currency_info = re.findall(r"/([a-zA-Z]+)", text)
+        if currency_info:
+            currency = currency_info[0].strip().upper()
+        else:
+            currency = None
+
+        # Get the direction
+        direction_info = re.findall(r"Direction: ([a-zA-Z]+)", text)
+        if direction_info:
+            direction = direction_info[0].strip().upper()
+        else:
+            direction = None
+
+        # Get the entry prices
+        entry_price_info = re.findall(r"ENTRY: ([\d+.\-\s]+)", text)
+        if entry_price_info:
+            entry_prices = [float(price) for price in entry_price_info[0].split("-")]
+            average_buy_price = round(sum(entry_prices) / len(entry_prices), 5)
+        else:
+            average_buy_price = []
+
+        # Get the targets
+        targets_info = re.findall(r"TARGETS: ([\d+.\s-]+)", text)
+        if targets_info:
+            targets = [float(target) for target in targets_info[0].split("-")]
+        else:
+            targets = []
+
+        # Get the stop loss
+        stop_loss_info = re.findall(r"STOP LOSS: ([\d+.\-]+)", text)
+        if stop_loss_info:
+            stop_loss = float(stop_loss_info[0])
+        else:
+            stop_loss = None
 
 
 
 
-        
-
-klondike = """#SIGNAL (BTC/USD)
-
-🥎 Open LONG for the price between $22786- $22917 with 1% of your deposit with cross leverage.
-
-🍒 Targets:
-
-1) Close the position at the price $2296.9
-2) Close the position at the price $22992
-3) Close the position at the price $23026
-4) Close the position at the price $23083
-5) Close the position at the price $23152
-6) Close the position at the price $23243
-7) Close the position at the price $23358
-
-❌ STOP LOSS: $22671"""
+        # Get the future type
+        if average_buy_price is not None and stop_loss is not None:
+            if average_buy_price > stop_loss:
+                futureType = "LONG"
+            elif average_buy_price < stop_loss:
+                futureType = "SHORT"
+        else:
+            futureType = None
 
 
-klondike2 = """
-#SIGNAL (APT/USDT) 
+        self.futureType = futureType
+        self.symbol = coin
+        self.currency = currency
+        self.targets = targets
+        self.stopLoss = stop_loss
+        self.entries = average_buy_price
 
-📛 Risk of the signal: 8/10 
+        if coin is not None and futureType is not None and targets is not None and stop_loss is not None and average_buy_price is not None:
+            self.check = True
+            print("True")
+        print("killers_signal")
+        print("Coin:", coin)
+        print("Currency:", currency)
+        print("Targets:", targets)
+        print("Stop Loss:", stop_loss)
+        print("Average Buy Price:", average_buy_price)
+        print(futureType)
 
-🔑 Enter SHORT at price between $16.9 - $17.5 with 10x leverage on Binance Futures
+    def alts_signal(self):
+        self.source = 15
+        text = self.signal
+        if 'spot' in text.lower():
+            self.form = "SPOT"
 
-🉐 Targets:
+        # Get the name of the coin
+        coin_info = re.findall(r"\bCoin:\s*([\w/]+)\s*", text)
+        if coin_info:
+            coin = coin_info[0].strip().split("/")[0].upper()
+        else:
+            coin = None
 
-1️⃣ Close the order at the price $158
-2️⃣ Close the order at the price $15.1
-3️⃣ Close the order at the price $14.3
-4️⃣ Close the order at the price $13.1
-5️⃣ Close the order at the price $12.2
+        # Get the currency
+        currency_info = re.findall(r"/(\w+)\s", text)
+        if currency_info:
+            currency = currency_info[0].upper()
+        else:
+            currency = None
 
-❗️STOP LOSS: $181
+        # Get the average buy price
+        buy_price_info = re.findall(r"Entry:\s*([\d.\s-]+)", text)
+        if buy_price_info:
+            buy_prices = [float(price) for price in buy_price_info[0].split("-")]
+            average_buy_price = sum(buy_prices) / len(buy_prices)
+        else:
+            average_buy_price = None
+
+        # Get the targets
+        targets_info = re.findall(r"Target:\s*([\d.\s-]+)", text)
+        if targets_info:
+            targets = [float(target) for target in targets_info[0].split("-")]
+        else:
+            targets = []
+
+        # Get the stop loss
+        stop_loss_info = re.findall(r"Stoploss:\s*([\d.\-]+)", text)
+        if stop_loss_info:
+            stop_loss = float(stop_loss_info[0])
+        else:
+            stop_loss = None
+
+
+
+        # Get the future type
+        if average_buy_price is not None and stop_loss is not None:
+            if average_buy_price > stop_loss:
+                futureType = "LONG"
+            elif average_buy_price < stop_loss:
+                futureType = "SHORT"
+        else:
+            futureType = None
+
+
+        self.futureType = futureType
+        self.symbol = coin
+        self.currency = currency
+        self.targets = targets
+        self.stopLoss = stop_loss
+        self.entries = average_buy_price
+
+        if coin is not None and futureType is not None and targets is not None and stop_loss is not None and average_buy_price is not None:
+            self.check = True
+            print("True")
+
+        print("alts_signal")
+        print("Coin:", coin)
+        print("Currency:", currency)
+        print("Targets:", targets)
+        print("Stop Loss:", stop_loss)
+        print("Average Buy Price:", average_buy_price)
+        print(futureType)
+
+
+
+predictum = """
+Breakout ( Sell ) #AR/USDT ️ 
+
+Entry Point - 12.220
+
+Targets: 12.171 - 12.122 - 12.073 - 11.975 - 11.731
+Leverage - 10x
+Stop Loss - 12.955
 """
 
 
-#signal_klondike = Signal(klondike)
-#signal_klondike.klondike_signal()
-#print("-----------------------------")
+#
+# signal = Signal(predictum)
+# signal.predictum_signal()
+# print("-----------------------------")
 
-coach = """#RIF
 
-Buy : 0.0521 $
+yocrypto = """
+Long #THETAUSDT 
 
-Targets : 0.0539 - 0.0570 - 0.0600 -
+Bybit USDT, Binance
 
-0.0630 - 0.0680 $
+Entry: 1.24-1.258
 
-Stop Loss : 0.0500 $
+LEVERAGE: 2x
 
-Exchange : #Binance"""
+Targets: 1.40-1.50-1.60-1.80-2.04
 
-#signal_coach = Signal(coach)
-#signal_coach.coach_signal()
-#print("-----------------------------")
+Stop-loss - 1.1225
+"""
 
-theBull = """CHR/USDT
 
-ENTRY 0.1580 - 0.1590
+# signal = Signal(yocrypto)
+# signal.yocrypto_signal()
+# print("-----------------------------")
 
-TARGETS 0.1777 - 0.1937 - 0.2052 - 0.2317 - 0.2531 - 0.2745 - 0.3050 - 0.3438
 
-STOP LOSS ON DAILY CLOSE BELOW 0.1375"""
 
-#signal_theBull = Signal(theBull)
-#signal_theBull.theBull_signal()
+bullet = """
+COIN: $DOGE/USDT
+Direction: Long
+Exchange: Binance Futures
+Leverage: 3x
+
+ENTRY: 0.0695 - 0.0785 - 0.0872
+
+TARGETS: 0.0895 - 0.092 - 0.095 - 0.098 - 0.102 - 0.106 - 0.111 - 0.116 - 0.122 - 0.129 - 0.137 - 0.150 - 0.165 - 0.190 - 0.235 - 0.300
+
+SL: 0.063
+➖➖➖➖➖
+Bitcoin Bullets® Trading
+"""
+
+
+# signal = Signal(bullet)
+# signal.bullet_signal()
+# print("-----------------------------")
+
+mega = """
+⚡⚡ #GLMR/USDT ⚡⚡
+Exchanges: KuCoin, ByBit Spot, Binance, 
+Signal Type: Regular (Long)
+
+Entry Targets:
+1) 0.5150
+2) 0.5000
+
+Take-Profit Targets:
+1) 0.5350 - 25.0%
+2) 0.5500 - 25.0%
+3) 0.5800 - 25.0%
+4) 0.6100 - 25.0%
+
+Stop Targets:
+1) 0.4600
+
+Trailing Configuration:
+Stop: Moving 2 Target -
+  Trigger: Target (2
+"""
+
+
+# signal = Signal(mega)
+# signal.mega_signal()
+# print("-----------------------------")
+
+
+killers = """
+SPOT
+
+COIN: $XTZ/USDT
+Direction: SHORT
+
+ENTRY: 1.18 - 1.207 - 1.235
+
+TARGETS: 1.17 - 1.16 - 1.145 - 1.13 - 1.11 - 1.08 - 1.03 - 0.95 - 0.87 - 0.78
+
+STOP LOSS: 1.29
+"""
+
+
+# signal = Signal(killers)
+# signal.killers_signal()
+# print("-----------------------------")
+
+
+alts = """
+Coin: DYDX/USDT LONG
+LEVERAGE:2x
+Entry: 2.403 - 2.911
+Target: 2.990 - 3.116 - 3.673 - 4.2
+Stoploss: 2.264
+"""
+
+#
+# signal = Signal(alts)
+# signal.alts_signal()
+# print("-----------------------------")
+
+
+
 
 '''
--1001284332848:Drvkich The bull exclusive
--1001429238571:Drvkich Rose premium signal
--1001401152082:Drvkich klondike vip
--1001157822084:Drvkich CCC.io Crypto coins premium leaks
--1001415616482:Drvkich trading crypto coach vip
-
-source 9: Wolves
-source 10: Ozel
-source 11: The bull
+source 9: Wolves -> Predictum
+source 10: Ozel -> Yocrypto
+source 11: The bull -> Mega
 source 12: klondike
-source 13: coach
-source 14: Rose
+source 13: coach -> Killers
+source 14: Rose -> Bullet
+source 15: Alts
 '''
