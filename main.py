@@ -11,6 +11,8 @@ with open("./config/config.yml", "r") as ymlfile:
 	
 api_id = cfg['telethon']['api_id']
 api_hash = cfg['telethon']['api_hash']
+BINANCE_API_KEY =  cfg['telethon']['BINANCE_API_KEY']
+BINANCE_SECRET_KEY = cfg['telethon']['BINANCE_SECRET_KEY']
 TELEGRAM_CHAT_ID_Test_bot = cfg['telethon']['TELEGRAM_CHAT_ID_Test_bot']
 TELEGRAM_CHAT_ID_CryptoHawk_Bot_Forward_Signal = cfg['telethon']['TELEGRAM_CHAT_ID_CryptoHawk-Bot-Forward_Signal']
 # TELEGRAM_CHAT_ID_The_Bull = cfg['telethon']['TELEGRAM_CHAT_ID_The_Bull']
@@ -60,6 +62,28 @@ def getChartURL(syombol):
 		return imgtag['src']
 
 
+def checkPA(symbol):
+    url = f'https://www.binance.com/fapi/v1/continuousKlines?limit=5&pair={symbol}USDT&contractType=PERPETUAL&interval=1m'
+    response = requests.request("GET", url)
+    data = response.json()
+    if data:
+        return float(data[0][1])
+    return None
+
+def convert_decimal(markPrice):
+	jump = 1
+	while markPrice < 1:
+		jump = jump*10
+		markPrice = markPrice*jump
+	return jump
+
+
+def convert_number(number, divisor):
+    if divisor > 1:
+        return number / (10**(len(str(number))-1)*divisor)
+    return number
+
+
 def createCr4Signal(signal):
 	coinName = signal.symbol
 	endpoint = BaseURL + "/api/v1/currency/search?keyword=" + coinName
@@ -67,16 +91,17 @@ def createCr4Signal(signal):
 	headers = {"Authorization": "Bearer " + token}
 	response = requests.get(endpoint, headers=headers).json()
 	data = response['data']
-	coinData = {}
 	for coin in data:
 		if coin["shortName"] == coinName:
 			id = coin["coinId"]
 			name = coin["shortName"]
 			icon = coin["logo"]
-	signalTargets = [{"price": float(validTarget)} for validTarget in signal.targets]
+	markPrice = checkPA(symbol = name)
+	divisor = convert_decimal(markPrice = markPrice)
+	signalTargets = [{"price": float(convert_number(validTarget, divisor))} for validTarget in signal.targets]
+	signal.entries = convert_number(signal.entries, divisor)
+	signal.stopLoss = convert_number(signal.stopLoss, divisor)
 	json_data = {"coin":{"id":id ,"name":name ,"pair": signal.currency , "icon": icon} ,"statistics":{"images":[getChartURL(signal.symbol)]} ,"entryPrice":float(signal.entries), "stopPrice":float(signal.stopLoss), "riskLevel":"MEDIUM", "multiple":1, "form":signal.form, "futureType":signal.futureType.upper(), "type":signal.signalMode, "targets":signalTargets, "leverage":str(signal.leverage), "source":signal.source, "status":signal.status}
-	print(json_data)
-	
 	response = requests.post(BaseURL + '/api/v1/admin/signals', json=json_data, headers=headers).json()
 	print(response)
 	
@@ -93,14 +118,10 @@ client = TelegramClient('0xLouis', api_id, api_hash)
 async def handler(event):
 	global message_klondike, message_Predictum, message_killers, message_Bullet, message_Mega, message_Yocrypto, message_Alts
 	chat_id = event.chat_id
-	# if chat_id == TELEGRAM_CHAT_ID_Test_bot:
-	# 	message = event.message
-	# 	if "TARGET".lower() in message.text.lower():
-	# 		print(message.text)
 
 	if chat_id == TELEGRAM_CHAT_ID_klondike:
 		message = event.message
-		#await message.forward_to(TELEGRAM_CHAT_ID_CryptoHawk_Bot_Forward_Signal)
+		await message.forward_to(TELEGRAM_CHAT_ID_CryptoHawk_Bot_Forward_Signal)
 		if "TARGET".lower() in message.text.lower() and message != message_klondike:
 			signal_klondike = Signal(event.text)
 			signal_klondike.klondike_signal()
@@ -110,8 +131,8 @@ async def handler(event):
 
 	elif chat_id == TELEGRAM_CHAT_ID_Predictum:
 		message = event.message
-		#await message.forward_to(TELEGRAM_CHAT_ID_CryptoHawk_Bot_Forward_Signal)
-		if "TARGET".lower() in message.text.lower() and message != message_Predictum:
+		await message.forward_to(TELEGRAM_CHAT_ID_CryptoHawk_Bot_Forward_Signal)
+		if "TARGET".lower() in message.text.lower() and message != message_Predictum and "✅" not in event.text:
 			signal_Predictum = Signal(event.text)
 			signal_Predictum.predictum_signal()
 			if signal_Predictum.check:
@@ -120,7 +141,7 @@ async def handler(event):
 
 	elif chat_id == TELEGRAM_CHAT_ID_killers:
 		message = event.message
-		#await message.forward_to(TELEGRAM_CHAT_ID_CryptoHawk_Bot_Forward_Signal)
+		await message.forward_to(TELEGRAM_CHAT_ID_CryptoHawk_Bot_Forward_Signal)
 		if "TARGET".lower() in message.text.lower() and message != message_killers:
 			signal_killers = Signal(event.text)
 			signal_killers.killers_signal()
@@ -131,7 +152,7 @@ async def handler(event):
 
 	elif chat_id == TELEGRAM_CHAT_ID_Bullet:
 		message = event.message
-		#await message.forward_to(TELEGRAM_CHAT_ID_CryptoHawk_Bot_Forward_Signal)
+		await message.forward_to(TELEGRAM_CHAT_ID_CryptoHawk_Bot_Forward_Signal)
 		if "TARGET".lower() in message.text.lower() and message != message_Bullet:
 			signal_Bullet = Signal(event.text)
 			signal_Bullet.bullet_signal()
@@ -142,7 +163,7 @@ async def handler(event):
 
 	elif chat_id == TELEGRAM_CHAT_ID_Mega:
 		message = event.message
-		#await message.forward_to(TELEGRAM_CHAT_ID_CryptoHawk_Bot_Forward_Signal)
+		await message.forward_to(TELEGRAM_CHAT_ID_CryptoHawk_Bot_Forward_Signal)
 		if "TARGET".lower() in message.text.lower() and message != message_Mega:
 			signal_Mega = Signal(event.text)
 			signal_Mega.mega_signal()
@@ -152,7 +173,7 @@ async def handler(event):
 
 	elif chat_id == TELEGRAM_CHAT_ID_Yocrypto:
 		message = event.message
-		#await message.forward_to(TELEGRAM_CHAT_ID_CryptoHawk_Bot_Forward_Signal)
+		await message.forward_to(TELEGRAM_CHAT_ID_CryptoHawk_Bot_Forward_Signal)
 		if "TARGET".lower() in message.text.lower() and message != message_Yocrypto:
 			signal_Yocrypto = Signal(event.text)
 			signal_Yocrypto.yocrypto_signal()
@@ -162,7 +183,7 @@ async def handler(event):
 
 	elif chat_id == TELEGRAM_CHAT_ID_Alts:
 		message = event.message
-		#await message.forward_to(TELEGRAM_CHAT_ID_CryptoHawk_Bot_Forward_Signal)
+		await message.forward_to(TELEGRAM_CHAT_ID_CryptoHawk_Bot_Forward_Signal)
 		if "TARGET".lower() in message.text.lower() and message != message_Alts:
 			signal_Alts = Signal(event.text)
 			signal_Alts.alts_signal()

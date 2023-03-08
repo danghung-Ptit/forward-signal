@@ -1,4 +1,3 @@
-import requests
 import re
 
 class Signal:
@@ -102,24 +101,37 @@ class Signal:
                 average_buy_price = (float(entry.group(1)) + float(entry.group(2))) / 2
             else:
                 average_buy_price = None
-        # Print the results
-        print("Coin:", coin)
-        print("Currency:", currency)
-        print("Targets:", targets)
-        print("Stop Loss:", stop_loss)
-        print("Average Buy Price:", average_buy_price)
 
-        #Get the futureType
 
-        if average_buy_price > stop_loss:
-            sefl.futureType = "LONG"
-        elif average_buy_price < stop_loss:
-            sefl.futureType = "SHORT"
+
+        # Get the future type
+        if average_buy_price is not None and stop_loss is not None:
+            if average_buy_price > stop_loss:
+                futureType = "LONG"
+            elif average_buy_price < stop_loss:
+                futureType = "SHORT"
+        else:
+            futureType = None
+
+
+        sefl.futureType = futureType
         sefl.symbol = coin
         sefl.currency = currency
         sefl.targets = targets
         sefl.stopLoss = stop_loss
         sefl.entries = average_buy_price
+
+        if coin is not None and futureType is not None and targets is not None and stop_loss is not None and average_buy_price is not None:
+            sefl.check = True
+            print("True")
+
+        print("klondike_signal")
+        print("Coin:", coin)
+        print("Currency:", currency)
+        print("Targets:", targets)
+        print("Stop Loss:", stop_loss)
+        print("Average Buy Price:", average_buy_price)
+        print(futureType)
 
 
 
@@ -377,8 +389,8 @@ class Signal:
 
        # Lấy danh sách các giá trị mục tiêu trong phần Entry Targets
         entry_targets = re.findall(r"Entry Targets:\n(?:\d+\)\s)?([\d\.]+)\n(?:\d+\)\s)?([\d\.]+)", text)
-        entry_targets = [float(x) for x in entry_targets[0]]
         if entry_targets:
+            entry_targets = [float(x) for x in entry_targets[0]]
             average_buy_price = round(sum(entry_targets) / len(entry_targets), 5)
         else:
             average_buy_price = None
@@ -577,21 +589,50 @@ class Signal:
 
 
 
-predictum = """
-Breakout ( Sell ) #AR/USDT ️ 
+klondike = """
+#SIGNAL (BTC/USD)
 
-Entry Point - 12.220
+🥎 Open SHORT for the price between $22022- $22147 with 1% of your deposit with cross leverage.
 
-Targets: 12.171 - 12.122 - 12.073 - 11.975 - 11.731
-Leverage - 10x
-Stop Loss - 12.955
+🍒 Targets:
+
+1) Close the position at the price $21971
+2) Close the position at the price $21949
+3) Close the position at the price $21916
+4) Close the position at the price $21861
+5) Close the position at the price $21795
+6) Close the position at the price $21706
+7) Close the position at the price $21596
+
+❌ STOP LOSS: $22257
 """
 
 
 #
+# signal = Signal(klondike)
+# signal.klondike_signal()
+# print("-----------------------------")
+#
+#
+# predictum = """
+# Breakout ( Sell ) #AGIX/USDT
+#
+# Entry Point - 3970
+#
+# Targets: 3954 - 3938 - 3922 - 3890 - 3810
+#
+# Leverage - 10x
+#
+# Stop Loss - 4210
+# """
+#
+#
+#
 # signal = Signal(predictum)
 # signal.predictum_signal()
 # print("-----------------------------")
+#
+
 
 
 yocrypto = """
@@ -636,26 +677,27 @@ Bitcoin Bullets® Trading
 # print("-----------------------------")
 
 mega = """
-⚡⚡ #GLMR/USDT ⚡⚡
-Exchanges: KuCoin, ByBit Spot, Binance, 
+⚡⚡ #BNB/USDT ⚡⚡
+Exchanges: ByBit USDT, Binance Futures
 Signal Type: Regular (Long)
+Leverage: Cross (5.0X)
 
 Entry Targets:
-1) 0.5150
-2) 0.5000
+1) 287
+2) 285
 
 Take-Profit Targets:
-1) 0.5350 - 25.0%
-2) 0.5500 - 25.0%
-3) 0.5800 - 25.0%
-4) 0.6100 - 25.0%
+1) 288.5 - 25.0%
+2) 291 - 25.0%
+3) 294 - 25.0%
+4) 299 - 25.0%
 
 Stop Targets:
-1) 0.4600
+1) 283
 
 Trailing Configuration:
 Stop: Moving 2 Target -
-  Trigger: Target (2
+  Trigger: Target (2)
 """
 
 
