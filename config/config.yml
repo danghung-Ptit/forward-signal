@@ -18,6 +18,7 @@ telethon:
     TELEGRAM_CHAT_ID_Mega: -1001563558761
     TELEGRAM_CHAT_ID_Yocrypto: -1001196334161
     TELEGRAM_CHAT_ID_Alts: -1001663586985
+    TELEGRAM_CHAT_ID_gg: -1001825288627 #------
 #    api_id: 28206423  # ANguyện
 #    api_hash: 61a64a5d9e5dbedaba7c55b02b29c101
 

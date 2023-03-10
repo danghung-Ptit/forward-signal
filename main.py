@@ -25,6 +25,7 @@ TELEGRAM_CHAT_ID_Bullet = cfg['telethon']['TELEGRAM_CHAT_ID_Bullet']
 TELEGRAM_CHAT_ID_Mega = cfg['telethon']['TELEGRAM_CHAT_ID_Mega']
 TELEGRAM_CHAT_ID_Yocrypto = cfg['telethon']['TELEGRAM_CHAT_ID_Yocrypto']
 TELEGRAM_CHAT_ID_Alts = cfg['telethon']['TELEGRAM_CHAT_ID_Alts']
+TELEGRAM_CHAT_ID_gg = cfg['telethon']['TELEGRAM_CHAT_ID_gg']
 
 
 
@@ -80,7 +81,7 @@ def convert_decimal(markPrice):
 
 def convert_number(number, divisor):
     if divisor > 1:
-        return number / (10**(len(str(number))-1)*divisor)
+        return number / (10**(len(str(number))-3)*divisor)
     return number
 
 
@@ -99,9 +100,10 @@ def createCr4Signal(signal):
 	markPrice = checkPA(symbol = name)
 	divisor = convert_decimal(markPrice = markPrice)
 	signalTargets = [{"price": float(convert_number(validTarget, divisor))} for validTarget in signal.targets]
-	signal.entries = convert_number(signal.entries, divisor)
-	signal.stopLoss = convert_number(signal.stopLoss, divisor)
-	json_data = {"coin":{"id":id ,"name":name ,"pair": signal.currency , "icon": icon} ,"statistics":{"images":[getChartURL(signal.symbol)]} ,"entryPrice":float(signal.entries), "stopPrice":float(signal.stopLoss), "riskLevel":"MEDIUM", "multiple":1, "form":signal.form, "futureType":signal.futureType.upper(), "type":signal.signalMode, "targets":signalTargets, "leverage":str(signal.leverage), "source":signal.source, "status":signal.status}
+	entries = convert_number(signal.entries, divisor)
+	stopLoss = convert_number(signal.stopLoss, divisor)
+	print(f"convert_number ***: signalTargets: {signalTargets}\nentries: {entries}\nstopLoss: {stopLoss}")
+	json_data = {"coin":{"id":id ,"name":name ,"pair": signal.currency , "icon": icon} ,"statistics":{"images":[getChartURL(signal.symbol)]} ,"entryPrice":float(entries), "stopPrice":float(stopLoss), "riskLevel":"MEDIUM", "multiple":1, "form":signal.form, "futureType":signal.futureType.upper(), "type":signal.signalMode, "targets":signalTargets, "leverage":str(signal.leverage), "source":signal.source, "status":signal.status}
 	response = requests.post(BaseURL + '/api/v1/admin/signals', json=json_data, headers=headers).json()
 	print(response)
 	
@@ -112,11 +114,12 @@ message_Bullet = ''
 message_Mega = ''
 message_Yocrypto = ''
 message_Alts = ''
+message_gg = ''
 client = TelegramClient('0xLouis', api_id, api_hash)
 #client = TelegramClient('hungdv', api_id, api_hash)
 @client.on(events.NewMessage)
 async def handler(event):
-	global message_klondike, message_Predictum, message_killers, message_Bullet, message_Mega, message_Yocrypto, message_Alts
+	global message_klondike, message_Predictum, message_killers, message_Bullet, message_Mega, message_Yocrypto, message_Alts, message_gg
 	chat_id = event.chat_id
 
 	if chat_id == TELEGRAM_CHAT_ID_klondike:
@@ -190,6 +193,16 @@ async def handler(event):
 			if signal_Alts.check:
 				createCr4Signal(signal_Alts)
 				message_Alts = message
+
+	elif chat_id == TELEGRAM_CHAT_ID_gg:
+		message = event.message
+		await message.forward_to(TELEGRAM_CHAT_ID_CryptoHawk_Bot_Forward_Signal)
+		if "TARGET".lower() in message.text.lower() and message != message_gg:
+			signal_gg = Signal(event.text)
+			signal_gg.gg_signal()
+			if signal_gg.check:
+				createCr4Signal(signal_gg)
+				message_gg = message
 			
 client.start()
 client.run_until_disconnected()

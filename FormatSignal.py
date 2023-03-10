@@ -589,6 +589,94 @@ class Signal:
 
 
 
+    def gg_signal(self):
+        text = self.signal
+
+        self.source = 17
+        text = self.signal
+        if 'spot' in text.lower():
+            self.form = "SPOT"
+
+       # Tìm kiếm tên của đồng tiền
+        coin_info = re.findall(r"\#?([\w\d]+)[/\s]+[\w\d]+\s", text)
+        if coin_info:
+            coin = coin_info[0].strip().upper()
+        else:
+            coin = None
+            print("No coin name information found.")
+
+        currency = coin
+        if currency:
+            if "USD" in currency:
+                currency = "USDT"
+            elif "BUS" in currency:
+                currency = "BUSD"
+        else:
+            currency = None
+
+        coin = coin.replace(currency, "")
+
+
+
+       # Lấy danh sách các giá trị mục tiêu trong phần Entry Targets
+        buy_price_info = re.findall(r"Entry Zone:\s*([\d.\s-]+)", text)
+        if buy_price_info:
+            buy_prices = [float(price) for price in buy_price_info[0].split("-")]
+            average_buy_price = sum(buy_prices) / len(buy_prices)
+        else:
+            average_buy_price = None
+
+        # Lấy các giá trị trong phần Take-Profit Targets
+        target_info = re.findall(r"Target \d+:\s*([\d.]+)", text)
+        if target_info:
+            targets = [float(target) for target in target_info]
+        else:
+            target_info = re.findall(r"Target(\d+)\s*:?\s*([\d\.]+)", gg)
+            if target_info:
+                targets = [float(target[1]) for target in target_info]
+            else:
+                targets = []
+
+
+        # Lấy các giá trị trong phần Stop Targets
+        stop_loss_info = re.findall(r"Stop-Loss:\s*([\d.]+)", text)
+        if stop_loss_info:
+            stop_loss = float(stop_loss_info[0])
+        else:
+            stop_loss = None
+
+         # Get the future type
+        if average_buy_price is not None and stop_loss is not None:
+            if average_buy_price > stop_loss:
+                futureType = "LONG"
+            elif average_buy_price < stop_loss:
+                futureType = "SHORT"
+        else:
+            futureType = None
+
+
+        self.futureType = futureType
+        self.symbol = coin
+        self.currency = currency
+        self.targets = targets
+        self.stopLoss = stop_loss
+        self.entries = average_buy_price
+        self.leverage = 20
+
+        if coin is not None and futureType is not None and targets is not None and stop_loss is not None and average_buy_price is not None:
+            self.check = True
+            print("True")
+        print("gg_signal")
+        print("Coin:", coin)
+        print("Currency:", currency)
+        print("Targets:", targets)
+        print("Stop Loss:", stop_loss)
+        print("Average Buy Price:", average_buy_price)
+        print(futureType)
+
+
+
+
 klondike = """
 #SIGNAL (BTC/USD)
 
@@ -739,6 +827,34 @@ Stoploss: 2.264
 # print("-----------------------------")
 
 
+#
+# gg = """📩 #LTCUSDT 30m | Mid-Term
+# 📈 Short Entry Zone:91-93
+# 🎯Accuracy of this strategy - 82.00%
+#
+#
+# - ⏳ -  Signal details:
+#
+#
+#
+# Target1 :90.636
+# Target2 : 90.09
+# Target3 : 89.544
+# Target4 : 88.816
+# Target5:87.36
+# Target6:77.532
+# _____
+# Leverage : 20x
+# ❌Stop-Loss: 102.486
+# 💡After reaching the first target you can put the rest of the position to breakeven"""
+#
+#
+# signal = Signal(gg)
+# signal.gg_signal()
+# print("-----------------------------")
+#
+
+
 
 
 '''
@@ -749,4 +865,5 @@ source 12: klondike
 source 13: coach -> Killers
 source 14: Rose -> Bullet
 source 15: Alts
+source 17: gg
 '''
